@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ko" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZERO_STANCE // COZY ROOM PORTFOLIO</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: 레트로 픽셀 및 고딕 조화 -->
+    <link href="https://fonts.googleapis.com/css2?family=DungGeunMo&family=Syne:wght@800&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        kitschPink: '#ff007f',
+                        kitschYellow: '#d4ff00',
+                        kitschBlue: '#00f0ff',
+                        darkRoom: '#121212',
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                        syne: ['Syne', 'sans-serif'],
+                        pixel: ['DungGeunMo', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* 네오 키치 테두리 스타일 */
+        .kitsch-border {
+            border: 4px solid #000000;
+            box-shadow: 6px 6px 0px #000000;
+        }
+
+        /* 핫스팟 오버레이 하이라이트 효과 */
+        .hotspot-trigger {
+            position: absolute;
+            cursor: pointer;
+            border: 2px dashed transparent;
+            background-color: rgba(255, 255, 255, 0.01);
+            transition: all 0.2s ease-in-out;
+            z-index: 30;
+        }
+        .hotspot-trigger:hover {
+            border-color: #ff007f;
+            background-color: rgba(255, 0, 127, 0.15);
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
+        }
+
+        /* 핫스팟 라벨 */
+        .hotspot-tooltip {
+            position: absolute;
+            bottom: -32px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.8);
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'DungGeunMo', monospace;
+            font-size: 10px;
+            padding: 3px 8px;
+            border: 1px solid #ffffff;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s ease-in-out;
+            z-index: 40;
+        }
+        .hotspot-trigger:hover .hotspot-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+
+        /* 방명록 텍스트 둥둥 떠다니는 애니메이션 */
+        @keyframes floatText {
+            0% { transform: translateY(0px) rotate(-1.5deg); }
+            50% { transform: translateY(-8px) rotate(1.5deg); }
+            100% { transform: translateY(0px) rotate(-1.5deg); }
+        }
+        .floating-message {
+            animation: floatText 5s ease-in-out infinite;
+            text-shadow: 1px 1px 0px #ffffff, -1px -1px 0px #ffffff, 1px -1px 0px #ffffff, -1px 1px 0px #ffffff;
+        }
+
+        /* 문이 열리는 서사 연출 */
+        .door-panel-l { transition: transform 1.2s cubic-bezier(0.77, 0, 0.175, 1); transform-origin: left; }
+        .door-panel-r { transition: transform 1.2s cubic-bezier(0.77, 0, 0.175, 1); transform-origin: right; }
+        .entered-room .door-panel-l { transform: translateX(-100%) rotateY(-90deg); }
+        .entered-room .door-panel-r { transform: translateX(100%) rotateY(90deg); }
+    </style>
+</head>
+<body class="bg-white text-black font-sans overflow-x-hidden selection:bg-kitschPink selection:text-white">
+
+    <!-- 🚪 진입부: 스포트라이트 오버레이 -->
+    <div id="entranceGate" class="fixed inset-0 z-[100] flex perspective-[1200px] pointer-events-auto transition-all duration-1000">
+        <!-- 왼쪽 문 -->
+        <div id="gateL" class="door-panel-l w-1/2 h-full bg-neutral-950 border-r-4 border-black flex items-center justify-end relative">
+            <span class="text-neutral-700 text-xs font-mono mr-4">INITIATING SPOTLIGHT...</span>
+        </div>
+        <!-- 오른쪽 문 -->
+        <div id="gateR" class="door-panel-r w-1/2 h-full bg-neutral-950 border-l-4 border-black flex items-center justify-start relative">
+            <!-- 캐치프레이즈 노출 안내판 -->
+            <div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-50 w-[92vw] max-w-lg bg-white border-4 border-black p-6 text-center shadow-[8px_8px_0px_#d4ff00] transform -rotate-1">
+                <p class="text-[10px] font-pixel tracking-widest text-neutral-500 mb-2">[ 이승윤 0집 감성 아틀리에 ]</p>
+                <h1 class="font-black text-lg md:text-xl text-black leading-relaxed mb-6">
+                    "네모난 액자, 동그란 지구,<br>그리고 나를 찾아가는 여정."
+                </h1>
+                <button onclick="unlockAndEnter()" class="w-full bg-black text-white hover:bg-kitschPink font-pixel py-3 px-6 text-sm border-2 border-black transition-all duration-200 uppercase tracking-wider">
+                    방 안의 문 노크하고 탐색하기 🚪
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ⚡ 카메라 셔터 플래시 효과막 -->
+    <div id="cameraFlashOverlay" class="fixed inset-0 bg-white opacity-0 z-50 pointer-events-none transition-opacity duration-200"></div>
+
+    <!-- 🪐 메인 뷰포트 레이아웃 -->
+    <main class="relative min-h-screen w-full flex flex-col justify-between p-4 md:p-8 overflow-hidden bg-neutral-50">
+        
+        <!-- 탑 브랜딩 바 -->
+        <div class="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center z-20 gap-4 border-b-4 border-black pb-4 bg-transparent">
+            <div>
+                <h2 class="font-syne font-black text-3xl md:text-4xl tracking-tighter text-black uppercase">
+                    BAMING_TIGER.STANCE
+                </h2>
+                <p class="font-pixel text-xs text-neutral-600 mt-1">Experimental Interactive Canvas - Edited Mode</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="bg-kitschYellow border-2 border-black px-3 py-1 text-xs font-black rotate-1 shadow-[2px_2px_0px_#000]">
+                    ⚡ 그림 속 소품을 직접 누르세요!
+                </div>
+            </div>
+        </div>
+
+        <!-- 🖼️ 그림판 이미지 맵 캔버스 영역 -->
+        <div class="my-auto py-8 w-full flex items-center justify-center z-10">
+            <div class="relative w-full max-w-4xl kitsch-border bg-white overflow-hidden select-none">
+                
+                <!-- 원본 배경 드로잉 이미지 -->
+                <img src="./room_image.png" alt="My Cozy Room Space" class="w-full h-auto block pointer-events-none">
+
+                <!-- 💬 벽면의 흰 배경에 둥둥 떠다니게 될 방명록 텍스트 공간 -->
+                <div id="floatingBoard" class="absolute inset-0 pointer-events-none z-20">
+                    <!-- 방명록 등록 시 실시간으로 이 영역 위에 절대 배치됨 -->
+                </div>
+
+                <!-- ==================== 대화형 오브제 핫스팟 구역 ==================== -->
+                
+                <!-- 1) 지구본 (Globe 1 - 책상 위 오른쪽) -->
+                <div onclick="goToNaju()" class="hotspot-trigger rounded-full" style="left: 70%; top: 41%; width: 11%; height: 21%;">
+                    <div class="hotspot-tooltip">🌍 지구본 (나주 소환)</div>
+                </div>
+
+                <!-- 2) 지구본 (Globe 2 - 책장 위 맨 오른쪽) -->
+                <div onclick="goToNaju()" class="hotspot-trigger rounded-full" style="left: 83%; top: 3%; width: 12%; height: 23%;">
+                    <div class="hotspot-tooltip">🌍 지구본 (나주 소환)</div>
+                </div>
+
+                <!-- 3) 축구공 (Soccer Ball - 왼쪽 바닥) -->
+                <a href="https://www.arsenal.com/" target="_blank" class="hotspot-trigger rounded-full" style="left: 8%; top: 76%; width: 10%; height: 20%;">
+                    <div class="hotspot-tooltip">⚽ 축구공 (아스날 허브)</div>
+                </a>
+
+                <!-- 4) 헤드셋 (Headset - 책상 위 마우스 옆) -->
+                <div onclick="openAudioGate()" class="hotspot-trigger rounded-lg" style="left: 59%; top: 61%; width: 9%; height: 18%;">
+                    <div class="hotspot-tooltip">🎧 헤드셋 (이승윤 감상)</div>
+                </div>
+
+                <!-- 5) 노트북 (Laptop - 책상 중앙 아래) -->
+                <div onclick="openConsoleGate()" class="hotspot-trigger rounded-md" style="left: 40%; top: 63%; width: 18%; height: 22%;">
+                    <div class="hotspot-tooltip">💻 노트북 (업스테이지)</div>
+                </div>
+
+                <!-- 6) 카메라 (Camera - 책상 왼쪽 소형 상자) -->
+                <div onclick="shootCameraFlash()" class="hotspot-trigger rounded-md" style="left: 17%; top: 55%; width: 10%; height: 18%;">
+                    <div class="hotspot-tooltip">📸 카메라 (플래시 셔터)</div>
+                </div>
+
+                <!-- 7) 노트 1 (Book - '집시적 허용') -->
+                <div onclick="openGuestbookGate()" class="hotspot-trigger rounded-md" style="left: 27%; top: 71%; width: 10%; height: 19%;">
+                    <div class="hotspot-tooltip">📓 노트 ('집시적 허용' 방명록)</div>
+                </div>
+
+                <!-- 8) 노트 2 (Book - 'LEE SEUNG YOON') -->
+                <div onclick="openGuestbookGate()" class="hotspot-trigger rounded-md" style="left: 67%; top: 69%; width: 15%; height: 22%;">
+                    <div class="hotspot-tooltip">📓 노트 (방명록 기록하기)</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 📱 모바일 및 접근성용 대체 컨트롤 버튼 라인 -->
+        <div class="w-full max-w-4xl mx-auto mb-6 grid grid-cols-3 sm:grid-cols-6 gap-2 z-20">
+            <button onclick="goToNaju()" class="bg-white border-2 border-black hover:bg-emerald-50 text-xs py-2 font-pixel text-center kitsch-card-blue rounded">
+                🌍 지구본
+            </button>
+            <a href="https://www.arsenal.com/" target="_blank" class="bg-white border-2 border-black hover:bg-red-50 text-xs py-2 font-pixel text-center kitsch-card-pink rounded block">
+                ⚽ 축구공
+            </a>
+            <button onclick="openAudioGate()" class="bg-white border-2 border-black hover:bg-purple-50 text-xs py-2 font-pixel text-center kitsch-card-pink rounded">
+                🎧 헤드셋
+            </button>
+            <button onclick="openConsoleGate()" class="bg-white border-2 border-black hover:bg-blue-50 text-xs py-2 font-pixel text-center kitsch-card-blue rounded">
+                💻 노트북
+            </button>
+            <button onclick="shootCameraFlash()" class="bg-white border-2 border-black hover:bg-yellow-50 text-xs py-2 font-pixel text-center kitsch-card-yellow rounded">
+                📸 카메라
+            </button>
+            <button onclick="openGuestbookGate()" class="bg-black text-white border-2 border-black hover:bg-neutral-950 text-xs py-2 font-pixel text-center rounded">
+                📓 방명록
+            </button>
+        </div>
+
+        <!-- 푸터 및 슬로건 공간 -->
+        <footer class="w-full pt-4 border-t-4 border-black flex flex-col md:flex-row justify-between items-center text-xs font-mono font-bold gap-4 z-20">
+            <div>
+                "네모난 <span class="underline decoration-2 underline-offset-2 text-kitschPink">액자</span> 속에 세상을 가두고, 동그란 지구를 굴리며, 마침내 나를 완성한다."
+            </div>
+            <div class="text-neutral-500 text-[10px]">
+                © 2026 NEO KITSCH ROOM INTERACTIVE. ALL RIGHTS COZY.
+            </div>
+        </footer>
+    </main>
+
+
+    <!-- ==================== 다이얼로그 모달 허브 ==================== -->
+
+    <!-- 💻 노트북: 콘솔 터미널 모달 -->
+    <div id="laptopConsoleModal" class="fixed inset-0 bg-black/70 z-[120] hidden items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white border-4 border-black p-6 kitsch-border">
+            <div class="flex justify-between items-center border-b-2 border-black pb-2 mb-4">
+                <span class="font-pixel text-xs font-bold text-black">💻 RUNTIME_SHELL (LAPTOP)</span>
+                <button onclick="closeModal('laptopConsoleModal')" class="font-black hover:text-kitschPink">Close [X]</button>
+            </div>
+            <p class="text-xs text-neutral-700 leading-relaxed mb-4">
+                새로운 항해를 시작하는 모니터. 바닐라 프론트엔드 세계관 위에 나의 주관을 빌딩합니다. 업스테이지 홈페이지 게이트를 개방하시겠습니까?
+            </p>
+            <a href="https://careers.upstage.ai/ko/upstage" target="_blank" class="w-full bg-black text-white font-pixel text-center py-3 block hover:bg-kitschBlue hover:text-black border-2 border-black font-bold transition-colors">
+                🚀 UPSTAGE CAREERS 진입 ↗
+            </a>
+        </div>
+    </div>
+
+    <!-- 🎧 헤드셋: 오디오 플레이어 모달 -->
+    <div id="headsetAudioModal" class="fixed inset-0 bg-black/70 z-[120] hidden items-center justify-center p-4">
+        <div class="w-full max-w-lg bg-white border-4 border-black p-6 kitsch-border">
+            <div class="flex justify-between items-center border-b-2 border-black pb-2 mb-4">
+                <span class="font-pixel text-xs font-bold text-kitschPink">🎧 AUDIO_EMISSION (HEADSET)</span>
+                <button onclick="closeAudioPlayer()" class="font-black hover:text-kitschPink">Close [X]</button>
+            </div>
+            <div class="aspect-video w-full border-2 border-black bg-black mb-4">
+                <iframe id="audioIframe" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            <p class="text-center text-xs font-bold">이승윤 0집 - 시적 허용 (Original Audio Wave)</p>
+        </div>
+    </div>
+
+    <!-- 📓 노트: 방명록 작성용 모달 -->
+    <div id="notebookGuestbookModal" class="fixed inset-0 bg-black/70 z-[120] hidden items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white border-4 border-black p-6 kitsch-border">
+            <div class="flex justify-between items-center border-b-2 border-black pb-2 mb-4">
+                <span class="font-pixel text-xs font-bold">📓 GUEST_BOOK (NOTE)</span>
+                <button onclick="closeModal('notebookGuestbookModal')" class="font-black hover:text-kitschPink">Close [X]</button>
+            </div>
+            <form onsubmit="handleGuestbookSubmission(event)" class="space-y-3">
+                <input type="text" id="visitorName" required placeholder="작성자 별명" class="w-full border-2 border-black p-2 text-xs focus:outline-none focus:bg-neutral-50 font-bold">
+                <textarea id="visitorMsg" required rows="3" placeholder="그림판 배경 위 흰 벽면에 둥둥 떠다닐 한 줄 방명록을 입력해 주세요!" class="w-full border-2 border-black p-2 text-xs focus:outline-none focus:bg-neutral-50 font-bold"></textarea>
+                <button type="submit" class="w-full bg-black text-white hover:bg-kitschYellow hover:text-black font-pixel py-2.5 text-xs font-bold border-2 border-black transition-colors">
+                    벽면에 방명록 띄우기 ⚡
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ==================== 인터랙션 자바스크립트 엔진 ==================== -->
+    <script>
+        // 1) 인트로 레이어 개방 제어
+        function unlockAndEnter() {
+            document.body.classList.add('entered-room');
+            setTimeout(() => {
+                const gate = document.getElementById('entranceGate');
+                gate.style.opacity = '0';
+                gate.style.pointerEvents = 'none';
+                setTimeout(() => gate.classList.add('hidden'), 1200);
+            }, 1200);
+        }
+
+        // 2) 지구본 동작: 구글맵 나주시 좌표 이동
+        function goToNaju() {
+            window.open("https://www.google.com/maps/search/?api=1&query=%EB%82%98%EC%A3%BC%EC%8B%9C", "_blank");
+        }
+
+        // 3) 카메라 동작: 플래시 연출
+        function shootCameraFlash() {
+            const flash = document.getElementById('cameraFlashOverlay');
+            flash.style.opacity = '1';
+            setTimeout(() => {
+                flash.style.opacity = '0';
+            }, 250);
+        }
+
+        // 4) 모달 범용 유틸 함수
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.replace('hidden', 'flex');
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.replace('flex', 'hidden');
+        }
+
+        // 5) 노트북 콘솔 활성화
+        function openConsoleGate() {
+            openModal('laptopConsoleModal');
+        }
+
+        // 6) 헤드셋 오디오 모달 제어
+        function openAudioGate() {
+            document.getElementById('audioIframe').src = "https://www.youtube.com/embed/o0iK6t6Z8XA?autoplay=1";
+            openModal('headsetAudioModal');
+        }
+
+        function closeAudioPlayer() {
+            document.getElementById('audioIframe').src = "";
+            closeModal('headsetAudioModal');
+        }
+
+        // 7) 노트 방명록 모달 제어
+        function openGuestbookGate() {
+            openModal('notebookGuestbookModal');
+        }
+
+        // 8) 방명록 처리 및 실시간 벽면에 텍스트 스폰
+        function handleGuestbookSubmission(e) {
+            e.preventDefault();
+            const name = document.getElementById('visitorName').value.trim();
+            const msg = document.getElementById('visitorMsg').value.trim();
+            
+            if (!name || !msg) return;
+
+            const fullText = `"${msg}" - ${name}`;
+            spawnFloatingTextOnCanvas(fullText);
+
+            // 로컬 스토리지에 데이터 캐싱 저장
+            const saved = JSON.parse(localStorage.getItem('kitsch_room_notes') || '[]');
+            saved.push(fullText);
+            localStorage.setItem('kitsch_room_notes', JSON.stringify(saved));
+
+            // 입력 폼 정리 및 닫기
+            document.getElementById('visitorName').value = '';
+            document.getElementById('visitorMsg').value = '';
+            closeModal('notebookGuestbookModal');
+        }
+
+        // 배경 이미지 영역 내부의 적절한 흰 배경 포인트에 텍스트를 생성하는 함수
+        function spawnFloatingTextOnCanvas(textStr) {
+            const board = document.getElementById('floatingBoard');
+            const item = document.createElement('div');
+            
+            // 둥둥 뜨는 애니메이션 클래스 주입
+            item.className = 'floating-message absolute font-pixel text-[10px] md:text-xs font-black text-black px-2 py-1 bg-white/80 border border-black rounded shadow-sm select-none whitespace-nowrap z-20 transition-all';
+            item.innerText = textStr;
+
+            // 벽면의 빈 공간 좌표 집합군 (어지러운 그림 요소들을 가급적 침범하지 않는 구역 랜덤 추천)
+            const coordinates = [
+                { top: '8%', left: '42%' },  // "여기서 Chill 하자" 밑 빈칸 주변
+                { top: '35%', left: '5%' },   // 왼쪽 벽 포스터 사이 빈칸
+                { top: '22%', left: '25%' },  // 스마일 초상화 우측
+                { top: '32%', left: '60%' },  // 레코드판 포스터 주변
+                { top: '2%', left: '55%' },   // 상단 우측 여백
+                { top: '48%', left: '28%' }   // 컴퓨터 모니터 좌측 빈칸
+            ];
+
+            // 랜덤 포인트 초이스
+            const chosen = coordinates[Math.floor(Math.random() * coordinates.length)];
+            item.style.top = chosen.top;
+            item.style.left = chosen.left;
+
+            board.appendChild(item);
+
+            // 25초 후 제거하여 가비지 컬렉터 처리
+            setTimeout(() => {
+                item.remove();
+            }, 25000);
+        }
+
+        // 페이지 최초 도달 시 기존 캐시된 방명록 복원 및 기초 데모 가동
+        window.addEventListener('DOMContentLoaded', () => {
+            const saved = JSON.parse(localStorage.getItem('kitsch_room_notes') || '[]');
+            
+            // 캐시 데이터가 있으면 복원, 없으면 데모 텍스트 전개
+            if (saved.length > 0) {
+                // 최근 기록 최대 5개 스폰
+                saved.slice(-5).forEach(text => {
+                    spawnFloatingTextOnCanvas(text);
+                });
+            } else {
+                spawnFloatingTextOnCanvas('"예술은 살아있다!" - 아웃사이더');
+                spawnFloatingTextOnCanvas('"나주 배 먹고 힙하게 코딩하기" - 방랑객');
+                spawnFloatingTextOnCanvas('"이승윤 0집 감성 속으로!" - Chill_Guy');
+            }
+        });
+    </script>
+</body>
+</html>
